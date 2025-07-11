@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scientific Web Calculator</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>  <!-- ✅ Ye closing tag missing tha -->
+
+<body>
+  <div class="container">
+    <h2>Scientific Calculator 🔢</h2>
+    <input type="text" id="display" placeholder="e.g. sin(30)+√9" onkeydown="handleKey(event)">
+    
+    <div class="buttons">
+      <button onclick="add('7')">7</button>
+      <button onclick="add('8')">8</button>
+      <button onclick="add('9')">9</button>
+      <button onclick="add('+')">+</button>
+      <button onclick="add('4')">4</button>
+      <button onclick="add('5')">5</button>
+      <button onclick="add('6')">6</button>
+      <button onclick="add('-')">-</button>
+      <button onclick="add('1')">1</button>
+      <button onclick="add('2')">2</button>
+      <button onclick="add('3')">3</button>
+      <button onclick="add('*')">*</button>
+      <button onclick="add('0')">0</button>
+      <button onclick="add('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="add('/')">/</button>
+      <button onclick="add('%')">%</button>
+      <button onclick="add('^')">^</button>
+      <button onclick="add('√(')">√</button>
+      <button onclick="clearDisplay()">C</button>
+      <button onclick="add('sin(')">sin</button>
+      <button onclick="add('cos(')">cos</button>
+      <button onclick="add('tan(')">tan</button>
+      <button onclick="add('log(')">log</button>
+      <button onclick="add('ln(')">ln</button>
+      <button onclick="add('pi')">π</button>
+      <button onclick="add('e')">e</button>
+      <button onclick="toggleTheme()">🌓</button>
+      <button onclick="explain()">Explain</button>
+    </div>
+
+    <div id="result">Result: --</div>
+
+    <div id="history">
+      <h4>History</h4>
+      <ul id="historyList">
+        {% for h in history %}
+          <li>{{ h }}</li>
+        {% endfor %}
+      </ul>
+      <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+    </div>
+  </div>
+
+  <script>
+    function add(val) {
+      document.getElementById('display').value += val;
+    }
+
+    function clearDisplay() {
+      document.getElementById('display').value = '';
+      document.getElementById('result').innerText = 'Result: --';
+    }
+
+    function handleKey(e) {
+      if (e.key === "Enter") calculate();
+    }
+
+    async function calculate() {
+      const expression = document.getElementById('display').value;
+      const res = await fetch('/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expression })
+      });
+
+      const data = await res.json();
+      document.getElementById('result').innerText = 'Result: ' + data.result;
+
+      const li = document.createElement('li');
+      li.innerText = expression + ' = ' + data.result;
+      document.getElementById('historyList').appendChild(li);
+    }
+
+    async function clearHistory() {
+      await fetch('/clear_history', { method: 'POST' });
+      document.getElementById('historyList').innerHTML = '';
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+    }
+
+    function explain() {
+      const expression = document.getElementById("display").value;
+      fetch("/explain", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expression: expression })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("AI Explain:\n" + data.explanation);
+      });
+    }
+  </script>
+</body>
+</html>
